@@ -1,0 +1,66 @@
+.control-label {
+ margin-bottom: 1rem;
+}
+.progress {
+ height: 20px;
+}
+.btn {
+ padding:0.7rem 1.25rem;
+}
+.input-group .form-control:not(:first-child) {
+ padding-left:10px;
+}
+.form-group {
+ margin-bottom: 0.75rem;
+}
+.nav-tabs {
+ border-bottom: 1px solid #ddd;
+}
+.nav {
+ padding-left: 0;
+ margin-bottom: 10px;
+ list-style: none;
+}
+ol,
+ul {
+ margin-top: 0;
+ margin-bottom: 10px;
+}
+.nav-tabs > li {
+ float: left;
+ margin-bottom: -1px;
+}
+.nav > li {
+ position: relative;
+ display: block;
+}
+.nav-tabs > li > a.show,
+.nav-tabs > li> a.show:focus,
+.nav-tabs > li > a.show:hover,
+.nav-tabs > li.active > a,
+.nav-tabs > li.active> a:focus,
+.nav-tabs > li.active > a:hover {
+ color: #555;
+ cursor: default;
+ background-color: #fff;
+ border: 1px solid #ddd;
+ border-bottom-color: rgb(221, 221, 221);
+ border-bottom-color: transparent;
+}
+.nav-tabs > li > a {
+ margin-right: 2px;
+ line-height: 1.42857143;
+ border: 1px solid transparent;
+ border-radius: 4px 4px 0 0;
+}
+.nav > li > a {
+ position: relative;
+ display: block;
+ padding: 10px 15px;
+}
+::after,
+::before {
+ -webkit-box-sizing: border-box;
+ -moz-box-sizing: border-box;
+ box-sizing: border-box;
+}
