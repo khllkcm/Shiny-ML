@@ -18,7 +18,7 @@ ui <- argonDashPage(
         tabName = "data",
         icon = "single-copy-04",
         icon_color = "default",
-        "Upload Datasets"
+        "Data"
       ),
       argonSidebarItem(
         tabName = "eda",
@@ -59,23 +59,16 @@ ui <- argonDashPage(
 )
     ),
 useShinyalert(),
+useShinyjs(),
 argonTabItems(
   ## Datasets ----
   argonTabItem(
     tabName = "data",
-    argonTabSet(
-      id = "tab-1",
-      card_wrapper = TRUE,
-      horizontal = TRUE,
-      circle = FALSE,
-      size = "sm",
+    argonColumn(
+      conditionalPanel("output.tab==' '",
+    argonCard(
+      title = "Upload Dataset",
       width = 12,
-      iconList = NULL,
-      
-      ### Dataset ----
-      argonTab(
-        tabName = "Dataset",
-        active = T,
         argonRow(
           argonColumn(
             width = 3,
@@ -137,10 +130,9 @@ argonTabItems(
                 )
               )
             ),
-            uiOutput("selectResponse"),
             argonColumn(
               center=T,
-              actionButton("validate", "Validate Dataset")
+              actionButton("Next", "Next")
             )
           ),
           argonColumn(
@@ -157,10 +149,24 @@ argonTabItems(
             )
           )
         )
-      )
+    )),
+    conditionalPanel("output.tab=='  '",
+                     argonCard(width=12,
+                               title = "Choose Variables",
+                               argonColumn(
+                                 center=T,
+                                 argonRow(center = T,
+                                 uiOutput("selectVars"),
+                                 tags$div(
+                                   style="margin-left:50px;margin-right:50px;",
+                                   uiOutput("selectFactors")
+                                 ),
+                                 uiOutput("selectResponse")),
+                                 actionButton("prev", "Previous"),
+                                 actionButton("validate", "Validate")
+                               )))
       
     )
-    
   ),
   
   ## EDA ----
@@ -224,128 +230,11 @@ argonTabItems(
       
     )
     
-  ),
-  
-  
-  ## PCA ----
-  
-  argonTabItem(
-    tabName = "pca",
-    argonTabSet(
-      id = "tab-3",
-      card_wrapper = TRUE,
-      horizontal = TRUE,
-      circle = FALSE,
-      size = "sm",
-      width = 12,
-      iconList = NULL,
-      
-      ### Scree plot ----
-      
-      argonTab(
-        tabName = "Scree plot",
-        active = TRUE,
-        argonRow(
-          argonColumn(
-            width = 3,
-            selectInput(
-              "choice",
-              label = "Y Axis",
-              choices = c("variance", "eigenvalue"),
-              selected = "variance"
-            )
-          ),
-          argonColumn(
-            center = T,
-            width = 9,
-            plotOutput("screePlot", height = "100%") %>%
-              withSpinner(
-                color = "#5e72e4",
-                type = 7,
-                proxy.height = "600px"
-              )
-          )
-        )
-      ),
-      
-      ### Variable plot ----
-      
-      argonTab(
-        tabName = "Variables",
-        active = FALSE,
-        argonRow(
-          argonColumn(
-            width = 3,
-            selectInput(
-              "axis_X",
-              label = "X Axis Dimension",
-              choices = seq(5),
-              selected = 1
-            ),
-            
-            uiOutput("secondSelector"),
-            
-            
-            sliderInput(
-              "n_cos2",
-              label = "cos2:",
-              min = 0.1,
-              max = 0.9,
-              value = 0.5,
-              step = 0.1
-            )
-          ),
-          argonColumn(
-            center = T,
-            width = 9,
-            plotOutput("varPlot", height = "100%") %>%
-              withSpinner(
-                color = "#5e72e4",
-                type = 7,
-                proxy.height = "600px"
-              )
-          )
-        )
-      ),
-      
-      ### Bi-plot ----
-      
-      argonTab(
-        tabName = "Biplot",
-        active = FALSE,
-        argonRow(
-          argonColumn(
-            width = 3,
-            selectInput(
-              "axis_X2",
-              label = "X Axis Dimension",
-              choices = seq(5),
-              selected = 1
-            ),
-            
-            uiOutput("secondSelector2")
-            
-          ),
-          argonColumn(
-            center = T,
-            width = 9,
-            plotOutput("biPlot", height = "100%") %>%
-              withSpinner(
-                color = "#5e72e4",
-                type = 7,
-                proxy.height = "600px"
-              )
-          )
-        )
-      )
-      
-    )
-    
   )
 )
 
     ),
 
 # Footer ----
-footer = NULL
+footer = verbatimTextOutput("tab")
     )

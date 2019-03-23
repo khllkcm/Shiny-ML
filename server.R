@@ -1,16 +1,22 @@
 server <- function(input, output) {
   ## Dataset ----
   
-  output$selectResponse = renderUI(
-    selectInput(
-      inputId = "response",
-      label = "Session:",
-      choices = colnames(df.dataForDisplay()),
-      selected = colnames(df.dataForDisplay())[1]
-    )
-  )
+  ### Active data tab ----
+  
+  output$tab <- renderText({" "})
+  observeEvent(input$Next, {
+    output$tab <- renderText({"  "})
+  })
+  observeEvent(input$prev, {
+    output$tab <- renderText({" "})
+  })
+  
+  
   df.dataForDisplay = reactive({
-    req(input$file)
+    if (is.null(input$file)) {
+      # User has not uploaded a file yet
+      return(data.frame())
+    }
     validate(need(
       file_ext(input$file$name) %in% c(
         'text/csv',
@@ -55,7 +61,8 @@ server <- function(input, output) {
       sep = input$sep,
       quote = input$quote
     )
-    df[[input$response]] = as.factor(df[[input$response]])
+    df=df[input$vars]
+    df[input$factors] <- lapply(df[input$factors], as.factor)
     return(df)
   })
   
@@ -63,6 +70,25 @@ server <- function(input, output) {
   output$contents <- renderDataTable({
     df.dataForDisplay()
   }, options = list(processing = FALSE))
+  
+  ## Variables ----
+  output$selectVars = renderUI(selectInput("vars", "Variables to use:",
+                                           colnames(df.dataForDisplay()), colnames(df.dataForDisplay()), multiple =TRUE))
+  
+  output$selectFactors = renderUI(selectInput("factors", "Variables of type factor:",
+                                              input$vars, input$vars, multiple =TRUE))
+  
+  
+  
+  output$selectResponse = renderUI(
+    selectInput(
+      inputId = "response",
+      label = "Response:",
+      choices = input$factors,
+      selected = input$factors[1]
+    )
+  )
+  
   
   ## ANOVA ----
   output$selectAnovaVar = renderUI(selectInput(
@@ -81,6 +107,7 @@ server <- function(input, output) {
   )
   
   anovaFactors = reactive({
+    req(input$anovaVar)
     req(input$anovaFactors)
   })
   
