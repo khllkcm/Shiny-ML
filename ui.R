@@ -205,6 +205,28 @@ argonTabItems(
         )
       ),
       
+      ### Density ----
+      argonTab(
+        tabName = "Density",
+        active = FALSE,
+        argonRow(
+          argonColumn(
+            width = 3,
+            uiOutput("selectDensityVar")
+          ),
+          argonColumn(
+            center = T,
+            width = 9,
+            plotOutput("density") %>%
+              withSpinner(
+                color = "#5e72e4",
+                type = 7,
+                proxy.height = "400px"
+              )
+          )
+        )
+      ),
+      
       ### ANOVA ----
       argonTab(
         tabName = "ANOVA",

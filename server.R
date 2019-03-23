@@ -149,5 +149,20 @@ server <- function(input, output) {
     )
   })
   
+  ## Density ----
+  
+  output$selectDensityVar = renderUI(
+    selectInput(
+      inputId = "densityVar",
+      label = "Variable:",
+      choices = names(Filter(is.numeric, df.data()))
+    )
+  )
+  
+  output$density = renderPlot({
+    req(input$densityVar)
+    ggplot(df.data(),aes(x=eval(as.name(input$densityVar)))) + geom_density() + xlab(as.name(input$densityVar)) + theme_minimal()
+  })
+  
 }
 
