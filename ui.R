@@ -25,12 +25,6 @@ ui <- argonDashPage(
         icon = "chart-pie-35",
         icon_color = "warning",
         "Exploratory Data Analysis"
-      ),
-      argonSidebarItem(
-        tabName = "pca",
-        icon = "chart-bar-32",
-        icon_color = "success",
-        "Principle Component Analysis"
       )
     )
   ),
