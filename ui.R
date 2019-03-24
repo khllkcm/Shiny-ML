@@ -162,6 +162,7 @@ argonTabItems(
                                    uiOutput("selectFactors")
                                  ),
                                  uiOutput("selectResponse")),
+                                 argonRow(center=T,sliderInput('testprctg',label ='Test Set Percentage:',min = 20,max = 90,step = 1,value = 25)),
                                  actionButton("prev", "Previous"),
                                  actionButton("validate", "Validate")
                                )))

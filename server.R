@@ -164,5 +164,21 @@ server <- function(input, output) {
     ggplot(df.data(),aes(x=eval(as.name(input$densityVar)))) + geom_density() + xlab(as.name(input$densityVar)) + theme_minimal()
   })
   
+  
+  # Test/Train Data ----
+  df.train = NULL
+  df.test = NULL
+  observeEvent(input$validate,{
+    y = df.data()[,input$response]
+    X = df.data()[,input$vars[-which(input$vars==input$response)]]
+    df = cbind(y,X)[!is.na(y)&complete.cases(X),]
+    trainId = createDataPartition(df$y, times = 1,
+                                      p = 1-(input$testprctg/100),
+                                      list = FALSE)
+    df.train = df[ trainId,]
+    df.test  = df[-trainId,]
+  })
+  
+  
 }
 
