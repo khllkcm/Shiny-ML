@@ -18,7 +18,7 @@ ui <- argonDashPage(
         tabName = "data",
         icon = "single-copy-04",
         icon_color = "default",
-        "Data"
+        "Upload Data"
       ),
       argonSidebarItem(
         tabName = "eda",
@@ -208,7 +208,7 @@ argonTabItems(
       
       ### Density ----
       argonTab(
-        tabName = "Density",
+        tabName = "Distribution",
         active = FALSE,
         argonRow(
           argonColumn(
