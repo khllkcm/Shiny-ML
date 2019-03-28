@@ -74,8 +74,10 @@ server <- function(input, output) {
   
   ## Display Dataset ----
   output$contents <- renderDataTable({
-    df.dataForDisplay()
-  }, options = list(processing = FALSE))
+    datatable(df.dataForDisplay(),options = list(
+      scrollX = T
+    ))
+  })
   
   ## Variables ----
   output$selectVars = renderUI(selectInput(
@@ -190,15 +192,15 @@ server <- function(input, output) {
   observeEvent(input$validate, {
     y = df.data()[, input$response]
     X = df.data()[, input$vars[-which(input$vars == input$response)]]
-    df = cbind(y, X)[!is.na(y) & complete.cases(X), ]
+    df = cbind(y, X)[!is.na(y) & complete.cases(X),]
     trainId = createDataPartition(
       df$y,
       times = 1,
       p = 1 - (input$testprctg / 100),
       list = FALSE
     )
-    df.train <<- df[trainId, ]
-    df.test  <<- df[-trainId, ]
+    df.train <<- df[trainId,]
+    df.test  <<- df[-trainId,]
   })
   
   
@@ -212,33 +214,91 @@ server <- function(input, output) {
     }
   })
   
+  # Output  ----
+  output$matrix = renderDataTable({
+    df = data.frame(
+      row.names =
+        c(
+          "Accuracy",
+          "Kappa",
+          "Sensitivity",
+          "Specificity",
+          "Pos Pred Value",
+          "Neg Pred Value",
+          "Precision",
+          "Recall",
+          "F1",
+          "Prevalence",
+          "Detection Rate",
+          "Detection Prevalence",
+          "Balanced Accuracy"
+        )
+    )
+    for (model in input$models) {
+      df = cbind.data.frame(df,
+                            confusion(
+                              getModel(model),
+                              df.test,
+                              input$response,
+                              input$threshMetric,
+                              model
+                            ))
+    }
+    return(
+      datatable(
+        t(df),
+        class = "stripe",
+        options = list(
+          autoWidth = TRUE,
+          scrollX = T
+        )
+      ) %>% formatPercentage(colnames(t(df)), digits = 2) 
+      
+    )
+  })
+  
+  getModel = function(model) {
+    switch (model,
+            "Logit" = {
+              return(model.logit())
+            },
+            "Probit" = {
+              return(model.probit())
+            })
+  }
+  
   
   # Logit ----
   model.logit = reactive({
     req(input$response)
-    glm(
-      as.formula(paste(
-        input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
-      )),
-      data = df.train,
-      family = binomial("logit")
-    )
+    glm(as.formula(paste(
+      input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+    )),
+    data = df.train,
+    family = binomial("logit"))
   })
   
   output$logit = renderPrint(better.summary.glm(summary(model.logit())))
+  output$logitroc = renderPlot(
+    plotEval(model.logit(), df.test, input$response, input$plotType),
+    width = 600,
+    height = 600
+  )
   
   # Probit ----
   model.probit = reactive({
     req(input$response)
-    glm(
-      as.formula(paste(
-        input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
-      )),
-      data = df.train,
-      family = binomial("probit")
-    )
+    glm(as.formula(paste(
+      input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+    )),
+    data = df.train,
+    family = binomial("probit"))
   })
   
   output$probit = renderPrint(better.summary.glm(summary(model.probit())))
-  
+  output$probitroc = renderPlot(
+    plotEval(model.probit(), df.test, input$response, input$plotType),
+    width = 600,
+    height = 600
+  )
 }

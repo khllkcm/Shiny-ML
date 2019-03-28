@@ -28,8 +28,8 @@ ui <- argonDashPage(
       ),
       argonSidebarItem(
         tabName = "fit",
-        icon = "chart-pie-35",
-        icon_color = "warning",
+        icon = "atom",
+        icon_color = "info",
         "Fit Models"
       )
     )
@@ -141,15 +141,12 @@ argonTabItems(
                        argonColumn(
                          center = T,
                          width = 9,
-                         div(
-                           style = 'overflow-x: scroll',
-                           dataTableOutput("contents") %>%
-                             withSpinner(
-                               color = "#5e72e4",
-                               type = 7,
-                               proxy.height = "400px"
-                             )
-                         )
+                         dataTableOutput("contents") %>%
+                           withSpinner(
+                             color = "#5e72e4",
+                             type = 7,
+                             proxy.height = "400px"
+                           )
                        )
                      )
                    )
@@ -277,24 +274,81 @@ argonTabItems(
     argonCard(width = 12,
               argonRow(
                 argonColumn(
-                  width = 3,
+                  width = 2,
                   selectInput(
                     inputId = "models",
                     label = "Select models:",
                     choices = c("Logit", "Probit", "NN", "Ridge Regression"),
                     multiple = T
+                  ),
+                  selectInput(
+                    inputId = "plotType",
+                    label = "Evaluation Plot:",
+                    choices = c(
+                      "ROC curve",
+                      "Precision/recall graph",
+                      "Sensitivity/specificity plot",
+                      "Lift chart"
+                    )
+                  ),
+                  selectInput(inputId = "threshMetric",
+                              label = "Threshold Metric:",
+                              choices = c(
+                                "Matthews corr coeff",
+                                "TPR/FPR")
                   )
                 ),
                 argonColumn(
                   center = T,
-                  width = 9,
-                  tabsetPanel(id="tabs",
-                              tabPanel("Output"),
-                              tabPanel("Logit",verbatimTextOutput("logit")),
-                              tabPanel("Probit",verbatimTextOutput("probit")),
-                              tabPanel("NN"),
-                              tabPanel("Ridge Regression")
-                              )
+                  width = 10,
+                  tabsetPanel(
+                    id = "tabs",
+                    tabPanel("Output", dataTableOutput("matrix")),
+                    tabPanel(
+                      "Logit",
+                      argonTabSet(
+                        width = 12,
+                        id = "logitOutput",
+                        argonTab(
+                          tabName = "Logit Summary",
+                          active = T,
+                          verbatimTextOutput("logit")
+                        ),
+                        argonTab(
+                          tabName = "Logit Evaluation Plot",
+                          plotOutput("logitroc", height = "100%") %>%
+                            withSpinner(
+                              color = "#5e72e4",
+                              type = 7,
+                              proxy.height = "600px"
+                            )
+                        )
+                      )
+                    ),
+                    tabPanel(
+                      "Probit",
+                      argonTabSet(
+                        width = 12,
+                        id = "probitOutput",
+                        argonTab(
+                          tabName = "Probit Summary",
+                          active = T,
+                          verbatimTextOutput("probit")
+                        ),
+                        argonTab(
+                          tabName = "Probit Evaluation Plot",
+                          plotOutput("probitroc", height = "100%") %>%
+                            withSpinner(
+                              color = "#5e72e4",
+                              type = 7,
+                              proxy.height = "600px"
+                            )
+                        )
+                      )
+                    ),
+                    tabPanel("NN"),
+                    tabPanel("Ridge Regression")
+                  )
                 )
               ))
   )
@@ -303,4 +357,4 @@ argonTabItems(
 
 # Footer ----
 footer = verbatimTextOutput("tab")
-    )
+  )
