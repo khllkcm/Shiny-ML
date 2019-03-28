@@ -25,6 +25,12 @@ ui <- argonDashPage(
         icon = "chart-pie-35",
         icon_color = "warning",
         "Exploratory Data Analysis"
+      ),
+      argonSidebarItem(
+        tabName = "fit",
+        icon = "chart-pie-35",
+        icon_color = "warning",
+        "Fit Models"
       )
     )
   ),
@@ -48,11 +54,12 @@ ui <- argonDashPage(
   body = argonDashBody(
     ## CSS ----
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", 
+      tags$link(rel = "stylesheet", type = "text/css",
                 href = "style.css"),
       ## JS ----
       tags$script(
         "$(document).on('click', function(event) {
+        $('li[class*=\\'active\\']').find('a').addClass('active show');
         $('li[class*=\\'active\\']').removeClass('active');
         Shiny.onInputChange('currentTab', $('.active').data().value);
         });"
@@ -62,113 +69,123 @@ useShinyalert(),
 useShinyjs(),
 argonTabItems(
   ## Datasets ----
-  argonTabItem(
-    tabName = "data",
-    argonColumn(
-      conditionalPanel("output.tab==' '",
-    argonCard(
-      title = "Upload Dataset",
-      width = 12,
-        argonRow(
-          argonColumn(
-            width = 3,
-            argonColumn(
-              fileInput(
-                "file",
-                "Choose CSV File",
-                multiple = TRUE,
-                accept = c(
-                  'text/csv',
-                  'text/comma-separated-values',
-                  'text/tab-separated-values',
-                  'text/plain',
-                  'csv',
-                  'tsv'
-                )
-              )
-            ),
-            argonRow(
-              argonColumn(
-                width = 6,
-                radioButtons(
-                  "sep",
-                  "Separator",
-                  choices = c(
-                    Comma = ",",
-                    Semicolon = ";",
-                    Tab = "\t"
-                  ),
-                  selected = ","
-                )
-              ),
-              argonColumn(
-                width = 6,
-                radioButtons(
-                  "quote",
-                  "Quote",
-                  choices = c(
-                    None = "",
-                    "Double Quote" = '"',
-                    "Single Quote" = "'"
-                  ),
-                  selected = '"'
-                )
-              )
-            ),
-            
-            argonRow(
-              argonColumn(width = 6,
-                          checkboxInput("header", "Header", TRUE)),
-              argonColumn(
-                width = 6,
-                radioButtons(
-                  "disp",
-                  "Display",
-                  choices = c(Head = "head",
-                              All = "all"),
-                  selected = "head"
-                )
-              )
-            ),
-            argonColumn(
-              center=T,
-              actionButton("Next", "Next")
-            )
-          ),
-          argonColumn(
-            center = T,
-            width = 9,
-            div(
-              style = 'overflow-x: scroll',
-              dataTableOutput("contents") %>%
-                withSpinner(
-                  color = "#5e72e4",
-                  type = 7,
-                  proxy.height = "400px"
-                )
-            )
-          )
-        )
-    )),
-    conditionalPanel("output.tab=='  '",
-                     argonCard(width=12,
-                               title = "Choose Variables",
-                               argonColumn(
-                                 center=T,
-                                 argonRow(center = T,
-                                 uiOutput("selectVars"),
-                                 tags$div(
-                                   style="margin-left:50px;margin-right:50px;",
-                                   uiOutput("selectFactors")
-                                 ),
-                                 uiOutput("selectResponse")),
-                                 argonRow(center=T,sliderInput('testprctg',label ='Test Set Percentage:',min = 20,max = 90,step = 1,value = 25)),
-                                 actionButton("prev", "Previous"),
-                                 actionButton("validate", "Validate")
-                               )))
-      
-    )
-  ),
+  argonTabItem(tabName = "data",
+               argonColumn(
+                 conditionalPanel(
+                   "output.tab==' '",
+                   argonCard(
+                     title = "Upload Dataset",
+                     width = 12,
+                     argonRow(
+                       argonColumn(
+                         width = 3,
+                         argonColumn(fileInput(
+                           "file",
+                           "Choose CSV File",
+                           multiple = TRUE,
+                           accept = c(
+                             'text/csv',
+                             'text/comma-separated-values',
+                             'text/tab-separated-values',
+                             'text/plain',
+                             'csv',
+                             'tsv'
+                           )
+                         )),
+                         argonRow(
+                           argonColumn(
+                             width = 6,
+                             radioButtons(
+                               "sep",
+                               "Separator",
+                               choices = c(
+                                 Comma = ",",
+                                 Semicolon = ";",
+                                 Tab = "\t"
+                               ),
+                               selected = ","
+                             )
+                           ),
+                           argonColumn(
+                             width = 6,
+                             radioButtons(
+                               "quote",
+                               "Quote",
+                               choices = c(
+                                 None = "",
+                                 "Double Quote" = '"',
+                                 "Single Quote" = "'"
+                               ),
+                               selected = '"'
+                             )
+                           )
+                         ),
+                         
+                         argonRow(
+                           argonColumn(width = 6,
+                                       checkboxInput("header", "Header", TRUE)),
+                           argonColumn(
+                             width = 6,
+                             radioButtons(
+                               "disp",
+                               "Display",
+                               choices = c(Head = "head",
+                                           All = "all"),
+                               selected = "head"
+                             )
+                           )
+                         ),
+                         argonColumn(center = T,
+                                     actionButton("Next", "Next"))
+                       ),
+                       argonColumn(
+                         center = T,
+                         width = 9,
+                         div(
+                           style = 'overflow-x: scroll',
+                           dataTableOutput("contents") %>%
+                             withSpinner(
+                               color = "#5e72e4",
+                               type = 7,
+                               proxy.height = "400px"
+                             )
+                         )
+                       )
+                     )
+                   )
+                 ),
+                 conditionalPanel(
+                   "output.tab=='  '",
+                   argonCard(
+                     width = 12,
+                     title = "Choose Variables",
+                     argonColumn(
+                       center = T,
+                       argonRow(
+                         center = T,
+                         uiOutput("selectVars"),
+                         tags$div(style = "margin-left:50px;margin-right:50px;",
+                                  uiOutput("selectFactors")),
+                         uiOutput("selectResponse")
+                       ),
+                       argonRow(
+                         center = T,
+                         sliderInput(
+                           'testprctg',
+                           label = 'Test Set Percentage:',
+                           min = 20,
+                           max = 90,
+                           step = 1,
+                           value = 25
+                         )
+                       ),
+                       actionButton("prev", "Previous"),
+                       actionButton("validate", "Validate")
+                     )
+                   )
+                 )
+                 
+               )),
   
   ## EDA ----
   argonTabItem(
@@ -211,10 +228,8 @@ argonTabItems(
         tabName = "Distribution",
         active = FALSE,
         argonRow(
-          argonColumn(
-            width = 3,
-            uiOutput("selectDensityVar")
-          ),
+          argonColumn(width = 3,
+                      uiOutput("selectDensityVar")),
           argonColumn(
             center = T,
             width = 9,
@@ -253,9 +268,37 @@ argonTabItems(
       
     )
     
+  ),
+  
+  # Fit models ----
+  argonTabItem(
+    tabName = "fit",
+    active = FALSE,
+    argonCard(width = 12,
+              argonRow(
+                argonColumn(
+                  width = 3,
+                  selectInput(
+                    inputId = "models",
+                    label = "Select models:",
+                    choices = c("Logit", "Probit", "NN", "Ridge Regression"),
+                    multiple = T
+                  )
+                ),
+                argonColumn(
+                  center = T,
+                  width = 9,
+                  tabsetPanel(id="tabs",
+                              tabPanel("Output"),
+                              tabPanel("Logit",verbatimTextOutput("logit")),
+                              tabPanel("Probit",verbatimTextOutput("probit")),
+                              tabPanel("NN"),
+                              tabPanel("Ridge Regression")
+                              )
+                )
+              ))
   )
 )
-
     ),
 
 # Footer ----
