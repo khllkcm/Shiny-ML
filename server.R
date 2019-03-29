@@ -1,4 +1,4 @@
-server <- function(input, output) {
+server <- function(input, output, session) {
   ## Dataset ----
   
   ### Active data tab ----
@@ -49,7 +49,6 @@ server <- function(input, output) {
   })
   
   df.data = eventReactive(input$validate, {
-    #return(read.csv(".csv"))
     validate(need(
       file_ext(input$file$name) %in% c(
         'text/csv',
@@ -187,12 +186,20 @@ server <- function(input, output) {
   df.train = NULL
   df.test = NULL
   
-  observeEvent(input$validate, genData())
+  observeEvent(input$validate, {
+    updateSelectInput(
+      session = session,
+      inputId = "models",
+      choices = c("Logit", "Probit", "NN", "LASSO Regression"),
+      selected = NULL
+    )
+    genData()
+  })
   
   genData = function() {
     yY = df.data()[, input$response]
     X = df.data()[, input$vars[-which(input$vars == input$response)]]
-    df = cbind(yY, X)[!is.na(yY) & complete.cases(X), ]
+    df = cbind(yY, X)[!is.na(yY) & complete.cases(X),]
     trainId = createDataPartition(
       df$yY,
       times = 1,
@@ -200,8 +207,8 @@ server <- function(input, output) {
       list = FALSE
     )
     colnames(df)[which(names(df) == "yY")] <- input$response
-    df.train <<- df[trainId, ]
-    df.test  <<- df[-trainId, ]
+    df.train <<- df[trainId,]
+    df.test  <<- df[-trainId,]
   }
   
   # Fit tabs ----
@@ -248,7 +255,7 @@ server <- function(input, output) {
           test,
           input$response,
           input$threshMetric,
-          model,
+          modeltype = model,
           df.test
         )
       )
@@ -321,7 +328,7 @@ server <- function(input, output) {
       data = df.train,
       family = binomial,
       size = input$nnSize,
-      maxit = 500
+      maxit = 1000
     )
   })
   
@@ -339,6 +346,7 @@ server <- function(input, output) {
   )
   
   # Penalized ----
+  
   model.lasso = reactive({
     x = model.matrix(as.formula(paste(
       input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
@@ -354,7 +362,7 @@ server <- function(input, output) {
     )
   })
   
-  output$lasso = renderPrint(summary(model.lasso()))
+  output$lasso = renderPrint(model.lasso()$beta)
   output$lassoroc = renderPlot(
     plotEval(
       model.lasso(),

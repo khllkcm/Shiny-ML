@@ -158,8 +158,13 @@ confusion = function(model,
             fpr = performance(testPred, measure = "fpr")
             threshold = tpr@x.values[[1]][which.max(tpr@y.values[[1]] - fpr@y.values[[1]])]
           })
-  conf = confusionMatrix(test[[response]], as.factor(as.numeric(testProb >
-                                                                  threshold)))
+  offset = 0
+  if ("2" %in% levels(test[[response]]))
+    offset = 1
+  if (modeltype == "NN")
+    threshold = 0.5
+  conf = confusionMatrix(test[[response]], factor(as.numeric(testProb >
+                                                                  threshold)+offset,levels=c(0+offset,1+offset)))
   result = data.frame(c(conf$overall[1:2], conf$byClass))
   colnames(result) = modeltype
   return(result)
