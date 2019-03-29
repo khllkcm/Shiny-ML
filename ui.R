@@ -278,8 +278,21 @@ argonTabItems(
                   selectInput(
                     inputId = "models",
                     label = "Select models:",
-                    choices = c("Logit", "Probit", "NN", "Ridge Regression"),
+                    choices = c("Logit", "Probit", "NN", "LASSO Regression"),
                     multiple = T
+                  ),
+                  selectInput(
+                    inputId = "threshMetric",
+                    label = "Threshold Metric:",
+                    choices = c("Matthews corr coeff",
+                                "TPR/FPR")
+                  ),
+                  numericInput(
+                    inputId = "nnSize",
+                    label = "Neural Network Size:",
+                    value = 3,
+                    min = 1,
+                    max = 10
                   ),
                   selectInput(
                     inputId = "plotType",
@@ -290,12 +303,6 @@ argonTabItems(
                       "Sensitivity/specificity plot",
                       "Lift chart"
                     )
-                  ),
-                  selectInput(inputId = "threshMetric",
-                              label = "Threshold Metric:",
-                              choices = c(
-                                "Matthews corr coeff",
-                                "TPR/FPR")
                   )
                 ),
                 argonColumn(
@@ -346,8 +353,41 @@ argonTabItems(
                         )
                       )
                     ),
-                    tabPanel("NN"),
-                    tabPanel("Ridge Regression")
+                    tabPanel("NN",argonTabSet(
+                      width = 12,
+                      id = "nnoutput",
+                      argonTab(
+                        tabName = "NN Evaluation Plot",
+                        active = T,
+                        plotOutput("nnroc", height = "100%") %>%
+                          withSpinner(
+                            color = "#5e72e4",
+                            type = 7,
+                            proxy.height = "600px"
+                          )
+                      )
+                    )),
+                    tabPanel(
+                      "LASSO Regression",
+                      argonTabSet(
+                        width = 12,
+                        id = "lassoOutput",
+                        argonTab(
+                          tabName = "LASSO Summary",
+                          active = T,
+                          verbatimTextOutput("lasso")
+                        ),
+                        argonTab(
+                          tabName = "LASSO Evaluation Plot",
+                          plotOutput("lassoroc", height = "100%") %>%
+                            withSpinner(
+                              color = "#5e72e4",
+                              type = 7,
+                              proxy.height = "600px"
+                            )
+                        )
+                      )
+                    )
                   )
                 )
               ))

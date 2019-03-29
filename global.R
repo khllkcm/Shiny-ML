@@ -14,7 +14,8 @@ library(shinyjs)
 library(caret)
 library(Deducer)
 library(ROCR)
-
+library(nnet)
+library(glmnet)
 
 better.summary.glm = function (x,
                                digits = max(3L, getOption("digits") - 3L),
@@ -42,7 +43,7 @@ better.summary.glm = function (x,
       cn <- names(aliased)
       coefs <- matrix(NA, length(aliased), 4L, dimnames = list(cn,
                                                                colnames(coefs)))
-      coefs[!aliased,] <- x$coefficients
+      coefs[!aliased, ] <- x$coefficients
     }
     printCoefmat(
       coefs,
@@ -106,9 +107,17 @@ better.summary.glm = function (x,
 
 
 
-plotEval = function(model, testData, response, type) {
+plotEval = function(model,
+                    testData,
+                    response,
+                    type,
+                    modeltype = "",
+                    test) {
+  predType = "response"
+  if (modeltype == "NN")
+    predType = "raw"
   testPred <-
-    predict(model, testData, type = "response") %>% prediction(labels = testData[[response]])
+    predict(model, testData, type = predType) %>% prediction(labels = test[[response]])
   switch (
     type,
     "ROC curve" =  return(
@@ -128,21 +137,30 @@ plotEval = function(model, testData, response, type) {
 
 
 
-confusion = function(model, testData, response, type, modeltype){
-  testProb = predict(model, testData, type = "response")
-  testPred = prediction(testProb, labels = testData[[response]])
+confusion = function(model,
+                     testData,
+                     response,
+                     type = "TPR/FPR",
+                     modeltype = "",
+                     test) {
+  predType = "response"
+  if (modeltype == "NN")
+    predType = "raw"
+  testProb = predict(model, testData, type = predType)
+  testPred = prediction(testProb, labels = test[[response]])
   switch (type,
           "Matthews corr coeff" = {
             corr = performance(testPred, measure = "mat")
-            threshold= corr@x.values[[1]][which.max(corr@y.values[[1]])]
+            threshold = corr@x.values[[1]][which.max(corr@y.values[[1]])]
           },
           "TPR/FPR" = {
             tpr = performance(testPred, measure = "tpr")
             fpr = performance(testPred, measure = "fpr")
             threshold = tpr@x.values[[1]][which.max(tpr@y.values[[1]] - fpr@y.values[[1]])]
           })
-  conf = confusionMatrix(testData[[response]],as.factor(as.numeric(testProb>threshold)))
-  result = data.frame(c(conf$overall[1:2],conf$byClass))
+  conf = confusionMatrix(test[[response]], as.factor(as.numeric(testProb >
+                                                                  threshold)))
+  result = data.frame(c(conf$overall[1:2], conf$byClass))
   colnames(result) = modeltype
   return(result)
 }

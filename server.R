@@ -74,9 +74,7 @@ server <- function(input, output) {
   
   ## Display Dataset ----
   output$contents <- renderDataTable({
-    datatable(df.dataForDisplay(),options = list(
-      scrollX = T
-    ))
+    datatable(df.dataForDisplay(), options = list(scrollX = T))
   })
   
   ## Variables ----
@@ -189,24 +187,26 @@ server <- function(input, output) {
   df.train = NULL
   df.test = NULL
   
-  observeEvent(input$validate, {
-    y = df.data()[, input$response]
+  observeEvent(input$validate, genData())
+  
+  genData = function() {
+    yY = df.data()[, input$response]
     X = df.data()[, input$vars[-which(input$vars == input$response)]]
-    df = cbind(y, X)[!is.na(y) & complete.cases(X),]
+    df = cbind(yY, X)[!is.na(yY) & complete.cases(X), ]
     trainId = createDataPartition(
-      df$y,
+      df$yY,
       times = 1,
       p = 1 - (input$testprctg / 100),
       list = FALSE
     )
-    df.train <<- df[trainId,]
-    df.test  <<- df[-trainId,]
-  })
-  
+    colnames(df)[which(names(df) == "yY")] <- input$response
+    df.train <<- df[trainId, ]
+    df.test  <<- df[-trainId, ]
+  }
   
   # Fit tabs ----
   observe({
-    for (model in c("Logit", "Probit", "NN", "Ridge Regression")) {
+    for (model in c("Logit", "Probit", "NN", "LASSO Regression")) {
       if (model %in% input$models)
         showTab(inputId = "tabs", target = model)
       else
@@ -235,38 +235,34 @@ server <- function(input, output) {
         )
     )
     for (model in input$models) {
-      df = cbind.data.frame(df,
-                            confusion(
-                              getModel(model),
-                              df.test,
-                              input$response,
-                              input$threshMetric,
-                              model
-                            ))
+      test = df.test
+      if (model == "LASSO Regression") {
+        test = model.matrix(as.formula(paste(
+          input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+        )), df.test)[, -1]
+      }
+      df = cbind.data.frame(
+        df,
+        confusion(
+          getModel(model),
+          test,
+          input$response,
+          input$threshMetric,
+          model,
+          df.test
+        )
+      )
     }
     return(
       datatable(
         t(df),
         class = "stripe",
-        options = list(
-          autoWidth = TRUE,
-          scrollX = T
-        )
-      ) %>% formatPercentage(colnames(t(df)), digits = 2) 
+        options = list(autoWidth = TRUE,
+                       scrollX = T)
+      ) %>% formatPercentage(colnames(t(df)), digits = 2)
       
     )
   })
-  
-  getModel = function(model) {
-    switch (model,
-            "Logit" = {
-              return(model.logit())
-            },
-            "Probit" = {
-              return(model.probit())
-            })
-  }
-  
   
   # Logit ----
   model.logit = reactive({
@@ -280,7 +276,13 @@ server <- function(input, output) {
   
   output$logit = renderPrint(better.summary.glm(summary(model.logit())))
   output$logitroc = renderPlot(
-    plotEval(model.logit(), df.test, input$response, input$plotType),
+    plotEval(
+      model.logit(),
+      df.test,
+      input$response,
+      input$plotType,
+      test = df.test
+    ),
     width = 600,
     height = 600
   )
@@ -297,8 +299,94 @@ server <- function(input, output) {
   
   output$probit = renderPrint(better.summary.glm(summary(model.probit())))
   output$probitroc = renderPlot(
-    plotEval(model.probit(), df.test, input$response, input$plotType),
+    plotEval(
+      model.probit(),
+      df.test,
+      input$response,
+      input$plotType,
+      test = df.test
+    ),
     width = 600,
     height = 600
   )
+  
+  # NN ----
+  model.nn = reactive({
+    req(input$response)
+    req(input$nnSize)
+    nnet(
+      as.formula(paste(
+        input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+      )),
+      data = df.train,
+      family = binomial,
+      size = input$nnSize,
+      maxit = 500
+    )
+  })
+  
+  output$nnroc = renderPlot(
+    plotEval(
+      model.nn(),
+      df.test,
+      input$response,
+      input$plotType,
+      "NN",
+      test = df.test
+    ),
+    width = 600,
+    height = 600
+  )
+  
+  # Penalized ----
+  model.lasso = reactive({
+    x = model.matrix(as.formula(paste(
+      input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+    )), df.train)[, -1]
+    y = df.train[[input$response]]
+    cv.lasso = cv.glmnet(x, y, family = "binomial", alpha = 1)
+    glmnet(
+      x,
+      y,
+      alpha = 1,
+      family = "binomial",
+      lambda = cv.lasso$lambda.min
+    )
+  })
+  
+  output$lasso = renderPrint(summary(model.lasso()))
+  output$lassoroc = renderPlot(
+    plotEval(
+      model.lasso(),
+      model.matrix(as.formula(paste(
+        input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+      )), df.test)[, -1],
+      input$response,
+      input$plotType,
+      test = df.test
+    ),
+    width = 600,
+    height = 600
+  )
+  
+  
+  getModel = function(model) {
+    switch (
+      model,
+      "Logit" = {
+        return(model.logit())
+      },
+      "Probit" = {
+        return(model.probit())
+      },
+      "NN" = {
+        return(model.nn())
+      },
+      "LASSO Regression" = {
+        return(model.lasso())
+      }
+    )
+  }
+  
+  
 }
