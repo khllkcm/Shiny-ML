@@ -38,7 +38,7 @@ better.summary.glm = function (x,
       cn <- names(aliased)
       coefs <- matrix(NA, length(aliased), 4L, dimnames = list(cn,
                                                                colnames(coefs)))
-      coefs[!aliased,] <- x$coefficients
+      coefs[!aliased, ] <- x$coefficients
     }
     printCoefmat(
       coefs,

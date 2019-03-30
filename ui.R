@@ -410,10 +410,16 @@ argonTabItems(
                   selectInput(
                     inputId = "crossModels",
                     label = "Select models:",
-                    choices = c("glm", "Neural Network", "LASSO Regression", "Random Forest", "SVM"),
+                    choices = c(
+                      "glm",
+                      "Neural Network",
+                      "LASSO Regression",
+                      "Random Forest",
+                      "SVM"
+                    ),
                     multiple = T
                   ),
-                  actionButton("fitCross","Fit models")
+                  actionButton("fitCross", "Fit models")
                 ),
                 argonColumn(
                   center = T,

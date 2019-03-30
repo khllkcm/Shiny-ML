@@ -199,7 +199,7 @@ server <- function(input, output, session) {
   genData = function() {
     yY = df.data()[, input$response]
     X = df.data()[, input$vars[-which(input$vars == input$response)]]
-    df = cbind(yY, X)[!is.na(yY) & complete.cases(X), ]
+    df = cbind(yY, X)[!is.na(yY) & complete.cases(X),]
     trainId = createDataPartition(
       df$yY,
       times = 1,
@@ -207,8 +207,8 @@ server <- function(input, output, session) {
       list = FALSE
     )
     colnames(df)[which(names(df) == "yY")] <- input$response
-    df.train <<- df[trainId, ]
-    df.test  <<- df[-trainId, ]
+    df.train <<- df[trainId,]
+    df.test  <<- df[-trainId,]
   }
   
   # Fit tabs ----
@@ -402,7 +402,8 @@ server <- function(input, output, session) {
   
   df = data.frame(
     row.names =
-      c("Accuracy",
+      c(
+        "Accuracy",
         "Kappa",
         "Sensitivity",
         "Specificity",
@@ -419,13 +420,14 @@ server <- function(input, output, session) {
   )
   
   
-  observeEvent(input$fitCross,{
+  observeEvent(input$fitCross, {
     disable('fitCross')
     on.exit(enable('fitCross'))
     req(input$response)
     df = data.frame(
       row.names =
-        c("Accuracy",
+        c(
+          "Accuracy",
           "Kappa",
           "Sensitivity",
           "Specificity",
@@ -449,12 +451,10 @@ server <- function(input, output, session) {
   })
   makeReactiveBinding('df')
   output$crossMatrix = renderDataTable({
-    datatable(
-      t(df),
-      class = "stripe",
-      options = list(autoWidth = TRUE,
-                     scrollX = T)
-    ) %>% formatPercentage(colnames(t(df)), digits = 2)
+    datatable(t(df),
+              class = "stripe",
+              options = list(autoWidth = TRUE,
+                             scrollX = T)) %>% formatPercentage(colnames(t(df)), digits = 2)
   })
   
   getCrossModel = function(model) {
@@ -467,22 +467,30 @@ server <- function(input, output, session) {
           )),
           data = df.train,
           method = "glm",
-          trControl = trainControl(method = "cv",
-                                   number = 10, verboseIter = T)
+          trControl = trainControl(
+            method = "cv",
+            number = 10,
+            verboseIter = T
+          )
         ))
       },
       "Neural Network" = {
-        return(train(
-          as.formula(paste(
-            input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
-          )),
-          data = df.train,
-          method = "nnet",
-          trace=F,
-          tuneGrid = expand.grid(size=c(3,5),decay=c(0.01)),
-          trControl = trainControl(method = "cv",
-                                   number = 10, verboseIter = T)
-        ))
+        return(
+          train(
+            as.formula(paste(
+              input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+            )),
+            data = df.train,
+            method = "nnet",
+            trace = F,
+            tuneGrid = expand.grid(size = c(3, 5), decay = c(0.01)),
+            trControl = trainControl(
+              method = "cv",
+              number = 10,
+              verboseIter = T
+            )
+          )
+        )
       },
       "LASSO Regression" = {
         return(train(
@@ -491,33 +499,46 @@ server <- function(input, output, session) {
           )),
           data = df.train,
           method = "glmnet",
-          trControl = trainControl(method = "cv",
-                                   number = 10, verboseIter = T)
+          trControl = trainControl(
+            method = "cv",
+            number = 10,
+            verboseIter = T
+          )
         ))
       },
       "Random Forest" = {
-        return(train(
-          as.formula(paste(
-            input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
-          )),
-          data = df.train,
-          method = "rf",
-          tuneGrid = data.frame(mtry=c(3,5)),
-          trControl = trainControl(method = "cv",
-                                   number = 10, verboseIter = T)
-        ))
+        return(
+          train(
+            as.formula(paste(
+              input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+            )),
+            data = df.train,
+            method = "rf",
+            tuneGrid = data.frame(mtry = c(3, 5)),
+            trControl = trainControl(
+              method = "cv",
+              number = 10,
+              verboseIter = T
+            )
+          )
+        )
       },
       "SVM" = {
-        return(train(
-          as.formula(paste(
-            input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
-          )),
-          data = df.train,
-          method = "svmLinear",
-          tuneGrid = data.frame(C=c(0.01,0.1,1)),
-          trControl = trainControl(method = "cv",
-                                   number = 10, verboseIter = T)
-        ))
+        return(
+          train(
+            as.formula(paste(
+              input$response, " ~ ", paste(input$vars[-which(input$vars == input$response)], collapse = "+")
+            )),
+            data = df.train,
+            method = "svmLinear",
+            tuneGrid = data.frame(C = c(0.01, 0.1, 1)),
+            trControl = trainControl(
+              method = "cv",
+              number = 10,
+              verboseIter = T
+            )
+          )
+        )
       }
       
     )
