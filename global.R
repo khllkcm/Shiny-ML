@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
 library(shinycssloaders)
+library(tools)
 library(argonR)
 library(argonDash)
 library(DT)
@@ -37,7 +38,7 @@ better.summary.glm = function (x,
       cn <- names(aliased)
       coefs <- matrix(NA, length(aliased), 4L, dimnames = list(cn,
                                                                colnames(coefs)))
-      coefs[!aliased, ] <- x$coefficients
+      coefs[!aliased,] <- x$coefficients
     }
     printCoefmat(
       coefs,
@@ -157,8 +158,22 @@ confusion = function(model,
     offset = 1
   if (modeltype == "NN")
     threshold = 0.5
-  conf = confusionMatrix(test[[response]], factor(as.numeric(testProb >
-                                                                  threshold)+offset,levels=c(0+offset,1+offset)))
+  conf = confusionMatrix(test[[response]], factor(
+    as.numeric(testProb >
+                 threshold) +
+      offset,
+    levels = c(0 + offset, 1 + offset)
+  ))
+  result = data.frame(c(conf$overall[1:2], conf$byClass))
+  colnames(result) = modeltype
+  return(result)
+}
+
+
+
+crossConfusion = function(model, testData, response, modeltype) {
+  testPred = predict(model, testData)
+  conf = confusionMatrix(testData[[response]], testPred)
   result = data.frame(c(conf$overall[1:2], conf$byClass))
   colnames(result) = modeltype
   return(result)

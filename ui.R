@@ -30,7 +30,13 @@ ui <- argonDashPage(
         tabName = "fit",
         icon = "atom",
         icon_color = "info",
-        "Fit Models"
+        "Fit Models on Training Set"
+      ),
+      argonSidebarItem(
+        tabName = "cross",
+        icon = "books",
+        icon_color = "success",
+        "10-fold Cross-Validation"
       )
     )
   ),
@@ -65,7 +71,6 @@ ui <- argonDashPage(
         });"
 )
     ),
-useShinyalert(),
 useShinyjs(),
 argonTabItems(
   ## Datasets ----
@@ -353,7 +358,7 @@ argonTabItems(
                         )
                       )
                     ),
-                    tabPanel("NN",argonTabSet(
+                    tabPanel("NN", argonTabSet(
                       width = 12,
                       id = "nnoutput",
                       argonTab(
@@ -389,6 +394,36 @@ argonTabItems(
                       )
                     )
                   )
+                )
+              ))
+  ),
+  
+  # Cross Validation ----
+  argonTabItem(
+    tabName = "cross",
+    active = FALSE,
+    argonCard(width = 12,
+              argonRow(
+                argonColumn(
+                  width = 2,
+                  center = T,
+                  selectInput(
+                    inputId = "crossModels",
+                    label = "Select models:",
+                    choices = c("glm", "Neural Network", "LASSO Regression", "Random Forest", "SVM"),
+                    multiple = T
+                  ),
+                  actionButton("fitCross","Fit models")
+                ),
+                argonColumn(
+                  center = T,
+                  width = 10,
+                  dataTableOutput("crossMatrix") %>%
+                    withSpinner(
+                      color = "#5e72e4",
+                      type = 7,
+                      proxy.height = "600px"
+                    )
                 )
               ))
   )
